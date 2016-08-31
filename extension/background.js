@@ -14,20 +14,28 @@
  * limitations under the License.
  */
 
+
 var OMNIBOX_MAX_RESULTS = 20;
 var REFERENCE_JS_URLS = [
-  'https://developer.android.com/reference/lists.js',
+  'lists.js',
   // 'https://developer.android.com/reference/gcm_lists.js',
   // 'https://developer.android.com/reference/gms_lists.js',
-  'https://developer.android.com/reference/jd_lists.js',
+  'jd_lists.js',
   'android-xml-ref.js'
 ];
+
+var LOCAL_DOC_PATH = 'file:///android_tools/android-sdk-linux_x86/docs/'
+
+chrome.storage.local.get({
+    localDocPath: 'file:///opt/android_tools/android-sdk-linux_x86/docs/'
+}, function(items) {
+    LOCAL_DOC_PATH = items.localDocPath;
+});
 
 
 chrome.omnibox.setDefaultSuggestion({
   description: 'Loading Android SDK search data...'
 });
-
 
 /**
  * Initialization function that tries to load the SDK reference JS, and upon
@@ -166,14 +174,14 @@ function loadScript(url, successFn, errorFn) {
  */
 function onScriptsLoaded() {
   chrome.omnibox.setDefaultSuggestion({
-    description: 'Search Android SDK docs for <match>%s</match>'
+    description: 'Search Android SDK local docs for <match>%s</match>'
   });
 
   chrome.omnibox.onInputChanged.addListener(
     function(query, suggestFn) {
       if (!query)
         return;
-  
+
       suggestFn = suggestFn || function(){};
       query = query.replace(/(^ +)|( +$)/g, '');
 
@@ -247,7 +255,7 @@ function onScriptsLoaded() {
             .replace(/\|\%/g, '</match>');
 
         omniboxResults.push({
-          content: 'https://developer.android.com/' + result.link,
+          content: LOCAL_DOC_PATH + result.link,
           description: description
         });
       }
@@ -257,11 +265,8 @@ function onScriptsLoaded() {
   );
 
   chrome.omnibox.onInputEntered.addListener(function(text) {
-    if (text.match(/^https?\:/)) {
+    if (text.match(/^file?\:/)) {
       navigateToUrl(text);
-    } else {
-      navigateToUrl('https://developer.android.com/index.html#q=' +
-          encodeURIComponent(text));
     }
   });
 }
